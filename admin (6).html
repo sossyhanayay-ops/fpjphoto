@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理画面｜お仕事発見隊</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif;background:#f0f4f2;min-height:100vh;color:#1a1a1a;}
+
+/* ログイン画面 */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.login-card{background:#fff;border-radius:16px;padding:32px 24px;width:100%;max-width:360px;box-shadow:0 4px 24px rgba(0,0,0,0.08);}
+.login-logo{text-align:center;margin-bottom:24px;}
+.login-logo div{font-size:40px;margin-bottom:8px;}
+.login-logo h1{font-size:18px;font-weight:700;color:#0F6E56;}
+.login-logo p{font-size:12px;color:#888;margin-top:4px;}
+.login-field{margin-bottom:14px;}
+.login-field label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:5px;}
+.login-field input{width:100%;padding:12px 14px;font-size:15px;border:1.5px solid #dde8de;border-radius:10px;font-family:inherit;}
+.login-field input:focus{outline:none;border-color:#1D9E75;box-shadow:0 0 0 3px rgba(29,158,117,0.12);}
+.login-btn{width:100%;padding:14px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;}
+.login-error{color:#E24B4A;font-size:13px;text-align:center;margin-top:10px;min-height:20px;}
+
+/* メイン画面 */
+.main-screen{display:none;}
+.top-bar{background:#1D9E75;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.top-bar h1{color:#fff;font-size:16px;font-weight:700;}
+.top-bar-right{display:flex;align-items:center;gap:10px;}
+.logout-btn{background:rgba(255,255,255,0.2);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;}
+
+/* フィルターバー */
+.filter-bar{background:#fff;padding:12px 16px;border-bottom:1px solid #e8ede9;display:flex;gap:8px;overflow-x:auto;}
+.filter-bar::-webkit-scrollbar{display:none;}
+.filter-chip{flex-shrink:0;padding:6px 14px;border-radius:99px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid #dde8de;background:#fff;color:#555;font-family:inherit;}
+.filter-chip.active{background:#1D9E75;color:#fff;border-color:#1D9E75;}
+
+/* 検索バー */
+.search-bar{padding:12px 16px;background:#fff;border-bottom:1px solid #e8ede9;}
+.search-input{width:100%;padding:10px 14px;font-size:14px;border:1.5px solid #dde8de;border-radius:10px;font-family:inherit;}
+.search-input:focus{outline:none;border-color:#1D9E75;}
+
+/* 統計バー */
+.stats-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:#e8ede9;border-bottom:1px solid #e8ede9;}
+.stat-item{background:#fff;padding:12px;text-align:center;}
+.stat-num{font-size:22px;font-weight:700;color:#1D9E75;}
+.stat-label{font-size:11px;color:#888;margin-top:2px;}
+
+/* タブ */
+.tab-bar{display:flex;background:#fff;border-bottom:2px solid #e8ede9;}
+.tab-btn{flex:1;padding:12px;font-size:14px;font-weight:600;cursor:pointer;border:none;background:none;font-family:inherit;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px;}
+.tab-btn.active{color:#1D9E75;border-bottom-color:#1D9E75;}
+
+/* 提出一覧テーブル */
+.list-section{padding:12px 16px;}
+.submit-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e4ede6;}
+.submit-table th{background:#f0f7f4;color:#0F6E56;font-weight:700;padding:10px 12px;text-align:left;border-bottom:1px solid #e4ede6;}
+.submit-table td{padding:10px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+.submit-table tr:last-child td{border-bottom:none;}
+.submit-table tr:hover td{background:#f9fdfb;}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;}
+.badge-am{background:#e8f4fd;color:#1a6fa0;}
+.badge-pm{background:#fdf3e8;color:#a06a1a;}
+.badge-co{background:#e8fdf3;color:#0F6E56;}
+.del-btn{background:#fff0f0;color:#E24B4A;border:1px solid #f8c8c8;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit;}
+.del-btn:hover{background:#E24B4A;color:#fff;}
+
+/* 写真グリッド */
+.photo-section{padding:12px 16px;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.section-header h2{font-size:14px;font-weight:700;color:#333;}
+.section-header span{font-size:12px;color:#888;}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;}
+.photo-card{position:relative;aspect-ratio:1;overflow:hidden;border-radius:4px;cursor:pointer;}
+.photo-card img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-card .photo-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.5) 0%,transparent 50%);opacity:0;}
+.photo-card:hover .photo-overlay{opacity:1;}
+.photo-card .photo-info{position:absolute;bottom:4px;left:4px;right:4px;display:none;}
+.photo-card:hover .photo-info{display:block;}
+.photo-card .photo-company{color:#fff;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* 企業グループ */
+.company-group{margin-bottom:20px;}
+.company-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff;border-radius:10px;margin-bottom:6px;border:1px solid #e4ede6;}
+.company-name{font-size:14px;font-weight:700;color:#0F6E56;}
+.company-meta{font-size:12px;color:#888;}
+.company-date{font-size:11px;color:#aaa;margin-top:2px;}
+
+/* 写真モーダル */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:200;flex-direction:column;}
+.modal.show{display:flex;}
+.modal-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+.modal-title{color:#fff;font-size:14px;font-weight:600;}
+.modal-close{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:4px;}
+.modal-img-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal-img-wrap img{max-width:100%;max-height:100%;border-radius:8px;}
+.modal-footer{padding:16px;display:flex;gap:8px;}
+.modal-btn{flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;border:none;}
+.modal-btn.download{background:#1D9E75;color:#fff;}
+.modal-btn.delete{background:#E24B4A;color:#fff;}
+.modal-meta{padding:0 16px 12px;color:#aaa;font-size:12px;}
+
+/* ローディング */
+.loading{text-align:center;padding:48px 24px;color:#888;}
+.loading-spinner{font-size:32px;animation:spin 1s linear infinite;display:block;margin-bottom:12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* 空状態 */
+.empty-state{text-align:center;padding:48px 24px;color:#888;}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+
+/* 企業フィルタードロップダウン */
+.company-filter{padding:0 16px 12px;background:#fff;border-bottom:1px solid #e8ede9;}
+.company-select{width:100%;padding:10px 14px;font-size:14px;border:1.5px solid #dde8de;border-radius:10px;font-family:inherit;-webkit-appearance:none;appearance:none;background:#fff;}
+.company-select:focus{outline:none;border-color:#1D9E75;}
+
+.zip-btn:disabled{background:#aaa;cursor:not-allowed;}
+.loading-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0f4f2;flex-direction:column;gap:12px;}
+.loading-screen .spin{font-size:40px;animation:spin 1s linear infinite;}
+.loading-screen p{font-size:14px;color:#888;}
+</style>
+</head>
+<body>
+
+<!-- ログイン画面 -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="spin">⏳</div>
+  <p>読み込み中...</p>
+</div>
+<div class="login-screen" id="loginScreen" style="display:none;">
+  <div class="login-card">
+    <div class="login-logo">
+      <div>📸</div>
+      <h1>お仕事発見隊</h1>
+      <p>写真管理システム｜事務局専用</p>
+    </div>
+    <div class="login-field">
+      <label>メールアドレス</label>
+      <input type="email" id="loginEmail" placeholder="example@gmail.com">
+    </div>
+    <div class="login-field">
+      <label>パスワード</label>
+      <input type="password" id="loginPassword" placeholder="パスワードを入力">
+    </div>
+    <button class="login-btn" onclick="doLogin()">ログイン</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- メイン画面 -->
+<div class="main-screen" id="mainScreen">
+  <div class="top-bar">
+    <h1>📸 写真管理</h1>
+    <div class="top-bar-right">
+      <button class="logout-btn" onclick="downloadExcel()">📊 Excel出力</button>
+      <button class="logout-btn zip-btn" id="zipBtn" onclick="downloadZip()">📦 ZIP一括DL</button>
+      <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+    </div>
+  </div>
+
+  <!-- 統計 -->
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-num" id="statTotal">-</div><div class="stat-label">総提出数</div></div>
+    <div class="stat-item"><div class="stat-num" id="statCompanies">-</div><div class="stat-label">提出企業数</div></div>
+  </div>
+
+  <!-- 検索・フィルター -->
+  <div class="search-bar">
+    <input type="text" class="search-input" id="searchInput" placeholder="🔍 企業名で検索..." oninput="filterPhotos()">
+  </div>
+  <div class="company-filter">
+    <select class="company-select" id="companyFilter" onchange="filterPhotos()">
+      <option value="">すべての企業</option>
+    </select>
+  </div>
+  <div class="filter-bar">
+    <button class="filter-chip active" onclick="setFilter('all',this)">すべて</button>
+    <button class="filter-chip" onclick="setFilter('2026',this)">2026年度</button>
+    <button class="filter-chip" onclick="setFilter('2027',this)">2027年度</button>
+  </div>
+
+  <!-- タブ -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabPhotos" onclick="switchTab('photos')">📷 写真一覧</button>
+    <button class="tab-btn" id="tabList" onclick="switchTab('list')">📋 提出一覧</button>
+  </div>
+
+  <!-- 写真一覧 -->
+  <div class="photo-section" id="photoSection">
+    <div class="loading"><span class="loading-spinner">⏳</span>読み込み中...</div>
+  </div>
+
+  <!-- 提出一覧 -->
+  <div class="list-section" id="listSection" style="display:none;">
+    <div class="loading"><span class="loading-spinner">⏳</span>読み込み中...</div>
+  </div>
+</div>
+
+<!-- 写真モーダル -->
+<div class="modal" id="photoModal">
+  <div class="modal-header">
+    <div class="modal-title" id="modalTitle">写真</div>
+    <button class="modal-close" onclick="closeModal()">×</button>
+  </div>
+  <div class="modal-img-wrap">
+    <img id="modalImg" src="" alt="">
+  </div>
+  <div class="modal-meta" id="modalMeta"></div>
+  <div class="modal-footer">
+    <button class="modal-btn download" onclick="downloadPhoto()">⬇️ ダウンロード</button>
+    <button class="modal-btn delete" onclick="deletePhoto()">🗑 削除</button>
+  </div>
+</div>
+
+<!-- JSZip -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+  import { getStorage, ref, deleteObject, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDL-IV2jaBFqZ2SaU8KOQkjZwWGlS8d8Hs",
+    authDomain: "fpjphoto-6431e.firebaseapp.com",
+    projectId: "fpjphoto-6431e",
+    storageBucket: "fpjphoto-6431e.firebasestorage.app",
+    messagingSenderId: "1070789469277",
+    appId: "1:1070789469277:web:8fd31e0eca39a857fb59b4"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const storage = getStorage(app);
+
+  window._db = db;
+  window._auth = auth;
+  window._storage = storage;
+  window._signInWithEmailAndPassword = signInWithEmailAndPassword;
+  window._signOut = signOut;
+  window._collection = collection;
+  window._getDocs = getDocs;
+  window._deleteDoc = deleteDoc;
+  window._doc = doc;
+  window._query = query;
+  window._orderBy = orderBy;
+  window._ref = ref;
+  window._deleteObject = deleteObject;
+  window._getDownloadURL = getDownloadURL;
+
+  onAuthStateChanged(auth, function(user) {
+    document.getElementById('loadingScreen').style.display = 'none';
+    if(user) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainScreen').style.display = 'block';
+      loadData();
+    } else {
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('mainScreen').style.display = 'none';
+    }
+  });
+</script>
+
+<script>
+var allSubmissions = [];
+var currentFilter = 'all';
+var currentModal = null;
+
+// ===== ログイン =====
+async function doLogin() {
+  var email = document.getElementById('loginEmail').value.trim();
+  var pw = document.getElementById('loginPassword').value;
+  var errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  try {
+    await window._signInWithEmailAndPassword(window._auth, email, pw);
+  } catch(e) {
+    errEl.textContent = 'メールアドレスまたはパスワードが違います';
+  }
+}
+
+function doLogout() {
+  if(confirm('ログアウトしますか？')) window._signOut(window._auth);
+}
+
+// ===== データ読み込み =====
+async function loadData() {
+  try {
+    var q = window._query(window._collection(window._db, 'submissions'), window._orderBy('submittedAt','desc'));
+    var snapshot = await window._getDocs(q);
+    allSubmissions = [];
+    snapshot.forEach(function(d) {
+      allSubmissions.push({id: d.id, ...d.data()});
+    });
+    updateStats();
+    buildCompanyFilter();
+    renderPhotos();
+    renderList();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('photoSection').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p>データの読み込みに失敗しました</p></div>';
+  }
+}
+
+// ===== 統計更新 =====
+function updateStats() {
+  var filtered = getFiltered();
+  var companies = new Set(filtered.map(function(s){ return s.companyName; })).size;
+  document.getElementById('statTotal').textContent = filtered.length;
+  document.getElementById('statCompanies').textContent = companies;
+}
+
+// ===== 企業フィルター構築 =====
+function buildCompanyFilter() {
+  var companies = [...new Set(allSubmissions.map(function(s){ return s.companyName; }))].sort();
+  var sel = document.getElementById('companyFilter');
+  sel.innerHTML = '<option value="">すべての企業</option>';
+  companies.forEach(function(c) {
+    sel.innerHTML += '<option value="' + c + '">' + c + '</option>';
+  });
+}
+
+// ===== フィルター =====
+function setFilter(val, btn) {
+  currentFilter = val;
+  document.querySelectorAll('.filter-chip').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  updateStats();
+  renderPhotos();
+}
+
+function getFiltered() {
+  var search = document.getElementById('searchInput').value.trim().toLowerCase();
+  var company = document.getElementById('companyFilter').value;
+  return allSubmissions.filter(function(s) {
+    if(currentFilter !== 'all' && s.year !== currentFilter) return false;
+    if(company && s.companyName !== company) return false;
+    if(search && !s.companyName.toLowerCase().includes(search)) return false;
+    return true;
+  });
+}
+
+function filterPhotos() {
+  updateStats();
+  renderPhotos();
+  renderList();
+}
+
+// ===== タブ切り替え =====
+var currentTab = 'photos';
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabPhotos').classList.toggle('active', tab === 'photos');
+  document.getElementById('tabList').classList.toggle('active', tab === 'list');
+  document.getElementById('photoSection').style.display = tab === 'photos' ? '' : 'none';
+  document.getElementById('listSection').style.display = tab === 'list' ? '' : 'none';
+}
+
+// ===== 提出一覧レンダリング =====
+function renderList() {
+  var filtered = getFiltered();
+  var section = document.getElementById('listSection');
+  if(filtered.length === 0) {
+    section.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>提出データがありません</p></div>';
+    return;
+  }
+  var html = '<table class="submit-table">';
+  html += '<thead><tr><th>企業名</th><th>体験日</th><th>午前/午後</th><th>撮影者</th><th>枚数</th><th>削除</th></tr></thead><tbody>';
+  filtered.forEach(function(s) {
+    var sessionBadge = s.session === '午前の部'
+      ? '<span class="badge badge-am">午前</span>'
+      : s.session === '午後の部'
+      ? '<span class="badge badge-pm">午後</span>'
+      : '<span class="badge badge-co">' + (s.session||'-') + '</span>';
+    var shooter = s.shooterName || (s.shooterType === '企業' ? '企業担当者' : s.shooterType) || '-';
+    var photoCount = s.photos ? s.photos.length : (s.photoCount || 0);
+    html += '<tr>';
+    html += '<td><strong>' + s.companyName + '</strong></td>';
+    html += '<td>' + (s.eventDate || '-') + '</td>';
+    html += '<td>' + sessionBadge + '</td>';
+    html += '<td>' + shooter + '</td>';
+    html += '<td>📷 ' + photoCount + '枚</td>';
+    html += '<td><button class="del-btn" onclick="deleteSubmission(\'' + s.id + '\')">削除</button></td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  section.innerHTML = html;
+}
+
+// ===== 提出1件まるごと削除 =====
+async function deleteSubmission(submissionId) {
+  var s = allSubmissions.find(function(x){ return x.id === submissionId; });
+  if(!s) return;
+  if(!confirm(s.companyName + ' の提出データを削除しますか？\n（Firestoreのデータのみ削除。写真ファイルは残ります）')) return;
+  try {
+    await window._deleteDoc(window._doc(window._db, 'submissions', submissionId));
+    await loadData();
+    alert('削除しました');
+  } catch(e) {
+    alert('削除に失敗しました: ' + e.message);
+  }
+}
+
+// ===== 写真レンダリング =====
+function renderPhotos() {
+  var filtered = getFiltered();
+  var section = document.getElementById('photoSection');
+
+  if(filtered.length === 0) {
+    section.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>写真が見つかりません</p></div>';
+    return;
+  }
+
+  // 企業ごとにグループ化
+  var groups = {};
+  filtered.forEach(function(s) {
+    var key = s.companyName;
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(s);
+  });
+
+  var html = '';
+  Object.keys(groups).forEach(function(company) {
+    var submissions = groups[company];
+    var totalPhotos = submissions.reduce(function(sum,s){ return sum+(s.photoCount||0); },0);
+    html += '<div class="company-group">';
+    html += '<div class="company-header">';
+    html += '<div><div class="company-name">' + company + '</div>';
+    html += '<div class="company-date">' + submissions[0].year + '年度</div></div>';
+    html += '<div class="company-meta">📷 ' + totalPhotos + '枚</div>';
+    html += '</div>';
+    html += '<div class="photo-grid">';
+    submissions.forEach(function(s) {
+      if(s.photos && s.photos.length > 0) {
+        s.photos.forEach(function(photo, idx) {
+          html += '<div class="photo-card" onclick="openModal(\'' + s.id + '\',' + idx + ')">';
+          html += '<img src="' + photo.url + '" alt="写真" loading="lazy">';
+          html += '<div class="photo-overlay"><div class="photo-info"><div class="photo-company">' + s.eventDate + '</div></div></div>';
+          html += '</div>';
+        });
+      }
+    });
+    html += '</div></div>';
+  });
+
+  section.innerHTML = html;
+}
+
+// ===== モーダル =====
+function openModal(submissionId, photoIdx) {
+  var submission = allSubmissions.find(function(s){ return s.id === submissionId; });
+  if(!submission || !submission.photos) return;
+  var photo = submission.photos[photoIdx];
+  currentModal = {submission: submission, photoIdx: photoIdx, photo: photo};
+
+  document.getElementById('modalImg').src = photo.url;
+  document.getElementById('modalTitle').textContent = submission.companyName;
+  document.getElementById('modalMeta').textContent =
+    '📅 ' + submission.eventDate + '　👤 ' + (submission.shooterName || submission.shooterType) + '　📷 ' + (photoIdx+1) + '/' + submission.photos.length + '枚目';
+  document.getElementById('photoModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('photoModal').classList.remove('show');
+  currentModal = null;
+}
+
+function downloadPhoto() {
+  if(!currentModal) return;
+  var a = document.createElement('a');
+  a.href = currentModal.photo.url;
+  a.download = 'photo.jpg';
+  a.target = '_blank';
+  a.click();
+}
+
+async function deletePhoto() {
+  if(!currentModal) return;
+  if(!confirm('この写真を削除しますか？')) return;
+  try {
+    var photoRef = window._ref(window._storage, currentModal.photo.path);
+    await window._deleteObject(photoRef);
+    // Firestoreからも該当写真を削除
+    var sub = currentModal.submission;
+    sub.photos.splice(currentModal.photoIdx, 1);
+    closeModal();
+    await loadData();
+    alert('削除しました');
+  } catch(e) {
+    alert('削除に失敗しました: ' + e.message);
+  }
+}
+
+
+
+// ===== ZIP一括ダウンロード =====
+async function downloadZip() {
+  var filtered = getFiltered();
+  var allPhotos = [];
+  filtered.forEach(function(s) {
+    if(s.photos && s.photos.length > 0) {
+      s.photos.forEach(function(photo, idx) {
+        allPhotos.push({
+          path: photo.path,
+          company: s.companyName,
+          idx: idx + 1
+        });
+      });
+    }
+  });
+
+  if(allPhotos.length === 0) {
+    alert('ダウンロードする写真がありません');
+    return;
+  }
+
+  var btn = document.getElementById('zipBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 準備中...';
+
+  try {
+    var zip = new JSZip();
+    var done = 0;
+
+    for(var i = 0; i < allPhotos.length; i++) {
+      var item = allPhotos[i];
+      try {
+        // Firebase SDK経由で署名付きURL取得 → fetch でBlob取得
+        var storageRef = window._ref(window._storage, item.path);
+        var url = await window._getDownloadURL(storageRef);
+        var res = await fetch(url);
+        var blob = await res.blob();
+        var ext = blob.type.includes('png') ? 'png' : 'jpg';
+        var filename = item.company + '/photo_' + String(item.idx).padStart(3,'0') + '.' + ext;
+        zip.file(filename, blob);
+      } catch(e) {
+        console.warn('スキップ:', item.path, e);
+      }
+      done++;
+      btn.textContent = '⏳ ' + done + '/' + allPhotos.length + '枚...';
+    }
+
+    btn.textContent = '📦 ZIP生成中...';
+    var content = await zip.generateAsync({type:'blob'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(content);
+    a.download = 'お仕事発見隊_写真_' + new Date().toISOString().slice(0,10) + '.zip';
+    a.click();
+    btn.textContent = '✅ 完了！';
+    setTimeout(function(){ btn.textContent = '📦 ZIP一括DL'; btn.disabled = false; }, 3000);
+
+  } catch(e) {
+    alert('ZIPの作成に失敗しました: ' + e.message);
+    btn.textContent = '📦 ZIP一括DL';
+    btn.disabled = false;
+  }
+}
+
+// ===== 企業マスタ（130社）=====
+var COMPANIES_MASTER = [
+  {id:'c001', name:'アダチ石油株式会社'},
+  {id:'c002', name:'エステサロン AQUALIE'},
+  {id:'c003', name:'スパホテルアルピナ飛騨高山'},
+  {id:'c004', name:'株式会社 アンビション・ヒダ'},
+  {id:'c005', name:'㈱アクアテック'},
+  {id:'c006', name:'気軽な大衆居酒屋あじ平'},
+  {id:'c007', name:'青木自動車有限会社'},
+  {id:'c008', name:'飛騨高山アンテナショップ まるっとプラザ'},
+  {id:'c009', name:'㈱井上工務店'},
+  {id:'c010', name:'三紲会 いしうら歯科医院'},
+  {id:'c011', name:'飛騨古川池田農園'},
+  {id:'c012', name:'有限会社いたばし生花店'},
+  {id:'c013', name:'株式会社 打江精機'},
+  {id:'c014', name:'MMPCコンサルティンググループ'},
+  {id:'c015', name:'N-resort Takayama'},
+  {id:'c016', name:'株式会社 恵那川上屋 高山花筏店'},
+  {id:'c017', name:'株式会社Edo 食堂喫茶どやな'},
+  {id:'c018', name:'株式会社エレクス'},
+  {id:'c019', name:'江名子保育園'},
+  {id:'c020', name:'patisserie onve＊'},
+  {id:'c021', name:'老田屋'},
+  {id:'c022', name:'オークヴィレッジ株式会社'},
+  {id:'c023', name:'オレンジベア'},
+  {id:'c024', name:'柿下木材工業所'},
+  {id:'c025', name:'株式会社カネモク'},
+  {id:'c026', name:'川端土建（株）'},
+  {id:'c027', name:'美容室 ガーデン 高山店'},
+  {id:'c028', name:'ひだ木遊館 木っずテラス'},
+  {id:'c029', name:'Hotel and Spa Gift TAKAYAMA'},
+  {id:'c030', name:'あぶらえのお店 くあどろ'},
+  {id:'c031', name:'Green Room'},
+  {id:'c032', name:'株式会社 ケアトピック'},
+  {id:'c033', name:'KOKO HOTEL 飛騨高山'},
+  {id:'c034', name:'コシャラシャント'},
+  {id:'c035', name:'有限会社糀屋柴田春次商店'},
+  {id:'c036', name:'㈲坂本製材所'},
+  {id:'c037', name:'刺し子でデザインする Sashi.co'},
+  {id:'c038', name:'ShiGenchi'},
+  {id:'c039', name:'しのだ株式会社'},
+  {id:'c040', name:'高山市長'},
+  {id:'c041', name:'株式会社シラカワ'},
+  {id:'c042', name:'株式会社下本商会'},
+  {id:'c043', name:'新宮保育園'},
+  {id:'c044', name:'新興自動車株式会社'},
+  {id:'c045', name:'助産院なお古川分院'},
+  {id:'c046', name:'株式会社 駿河屋魚一'},
+  {id:'c047', name:'合同会社Smiroost(四季折々 集Bar)'},
+  {id:'c048', name:'有限会社砂原石材'},
+  {id:'c049', name:'seize16セーズ'},
+  {id:'c050', name:'株式会社 瀬木油店'},
+  {id:'c051', name:'飛騨・世界生活文化センター'},
+  {id:'c052', name:'飛騨千光寺'},
+  {id:'c053', name:'Temple Hotel 高山善光寺'},
+  {id:'c054', name:'介護老人保健施設それいゆ'},
+  {id:'c055', name:'社会福祉法人 中山福祉会 総和保育園'},
+  {id:'c056', name:'(株)大成電気'},
+  {id:'c057', name:'株式会社高山グリーンホテル'},
+  {id:'c058', name:'空町銭湯 鷹の湯パラダイス'},
+  {id:'c059', name:'高山建築組合'},
+  {id:'c060', name:'高山左官業組合'},
+  {id:'c061', name:'高山市議会'},
+  {id:'c062', name:'高山市図書館'},
+  {id:'c063', name:'高山消防署'},
+  {id:'c064', name:'高山信用金庫'},
+  {id:'c065', name:'高山赤十字病院'},
+  {id:'c066', name:'Dining&Cafe原山'},
+  {id:'c067', name:'大八保育園'},
+  {id:'c068', name:'V・drug'},
+  {id:'c069', name:'中日新聞高山支局'},
+  {id:'c070', name:'中部電力パワーグリッド株式会社 高山支社'},
+  {id:'c071', name:'（株）つづく'},
+  {id:'c072', name:'テリクスタイヤ'},
+  {id:'c073', name:'寺田農園'},
+  {id:'c074', name:'株式会社 長瀬土建'},
+  {id:'c075', name:'社会福祉法人中山福祉会 中山保育園'},
+  {id:'c076', name:'株式会社ニクラボ'},
+  {id:'c077', name:'新田自動車'},
+  {id:'c078', name:'日医工岐阜工場株式会社'},
+  {id:'c079', name:'日進木工株式会社'},
+  {id:'c080', name:'株式会社ネコリパブリック SAVE THE CAT HIDA'},
+  {id:'c081', name:'猫の月さくらやま'},
+  {id:'c082', name:'No Name Coffee'},
+  {id:'c083', name:'濃飛乗合自動車株式会社'},
+  {id:'c084', name:'HAND DESIGN OFFICE'},
+  {id:'c085', name:'はっとなーる合同会社'},
+  {id:'c086', name:'ペットショップ Happy paws.'},
+  {id:'c087', name:'発達遊育教室はぴるん'},
+  {id:'c088', name:'panove'},
+  {id:'c089', name:'飛騨慈光会 ワークスペースぱぷりか'},
+  {id:'c090', name:'HitsFM'},
+  {id:'c091', name:'東農園'},
+  {id:'c092', name:'光ミュージアム'},
+  {id:'c093', name:'ひだコロッケ本舗'},
+  {id:'c094', name:'飛騨市神岡図書館'},
+  {id:'c095', name:'ひだホテルプラザ'},
+  {id:'c096', name:'広重バームクーヘン'},
+  {id:'c097', name:'斐太プランニング'},
+  {id:'c098', name:'飛騨産業株式会社'},
+  {id:'c099', name:'飛騨市消防本部'},
+  {id:'c100', name:'飛騨市図書館'},
+  {id:'c101', name:'飛騨信用組合'},
+  {id:'c102', name:'ピュア高山店 リッケ'},
+  {id:'c103', name:'FabCafe Hida'},
+  {id:'c104', name:'ファミリーマート高山上二之町店'},
+  {id:'c105', name:'フラワー空の色'},
+  {id:'c106', name:'レストラン風土'},
+  {id:'c107', name:'株式会社ファミリーストアさとう'},
+  {id:'c108', name:'株式会社古川屋'},
+  {id:'c109', name:'富士コンクリート工業株式会社'},
+  {id:'c110', name:'富士ストーブ'},
+  {id:'c111', name:'福栄楽器'},
+  {id:'c112', name:'ブックスアイオー'},
+  {id:'c113', name:'飛騨高山ブラックブルズ岐阜'},
+  {id:'c114', name:'有限会社ブレス'},
+  {id:'c115', name:'洞口設備工業'},
+  {id:'c116', name:'株式会社 洞口'},
+  {id:'c117', name:'株式会社本陣平野屋'},
+  {id:'c118', name:'本母保育園'},
+  {id:'c119', name:'(有)松野水道工事店'},
+  {id:'c120', name:'マリエクチュール'},
+  {id:'c121', name:'株式会社 鉞組'},
+  {id:'c122', name:'mignon nail'},
+  {id:'c123', name:'三枝保育園'},
+  {id:'c124', name:'株式会社メカトロニクス'},
+  {id:'c125', name:'山一商事株式会社'},
+  {id:'c126', name:'寄合所耕 古川ショップ'},
+  {id:'c127', name:'る・しえる'},
+  {id:'c128', name:'株式会社ロビン'},
+  {id:'c129', name:'NPO法人飛騨高山わらべうたの会'},
+  {id:'c130', name:'和井田製作所'}
+];
+
+// ===== Excel出力 =====
+function downloadExcel() {
+  // 提出データを企業名でグループ化
+  var submissionMap = {};
+  allSubmissions.forEach(function(s) {
+    var key = s.companyName;
+    if(!submissionMap[key]) submissionMap[key] = [];
+    submissionMap[key].push(s);
+  });
+
+  // 130社ループして行を作成
+  var rows = COMPANIES_MASTER.map(function(c) {
+    var subs = submissionMap[c.name] || [];
+    if(subs.length === 0) {
+      return {
+        '企業名': c.name,
+        '提出状況': '未提出',
+        '提出回数': 0,
+        '提出日一覧': ''
+      };
+    }
+    // 提出日＋午前午後を並べる
+    var dates = subs.map(function(s) {
+      var d = s.eventDate || '';
+      var sess = s.session === '午前の部' ? '午前' : s.session === '午後の部' ? '午後' : (s.session || '');
+      return d + (sess ? '(' + sess + ')' : '');
+    }).join('・');
+    return {
+      '企業名': c.name,
+      '提出状況': '提出済',
+      '提出回数': subs.length,
+      '提出日一覧': dates
+    };
+  });
+
+  var ws = XLSX.utils.json_to_sheet(rows);
+
+  // 列幅設定
+  ws['!cols'] = [
+    {wch: 30},
+    {wch: 10},
+    {wch: 10},
+    {wch: 40}
+  ];
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '提出状況');
+  var today = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, 'お仕事発見隊_提出状況_' + today + '.xlsx');
+}
+
+// Enterキーでログイン
+document.getElementById('loginPassword').addEventListener('keydown', function(e) {
+  if(e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>
